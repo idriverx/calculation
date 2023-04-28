@@ -6,8 +6,14 @@ class CurrencyRatesProvider
 {
     public function getExchangeRate(string $currency)
     {
-        $response = @json_decode(file_get_contents('https://api.exchangeratesapi.io/latest'), true);
+        $content = file_get_contents('https://api.exchangeratesapi.io/latest');
 
-        return $response['rates'][$currency] ?? 0;
+        if ($content === null) {
+            throw new \Exception("Can't get exchange rate");
+        }
+
+        $content = json_decode($content, true);
+
+        return $content['rates'][$currency] ?? 0;
     }
 }
