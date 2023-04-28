@@ -22,14 +22,7 @@ class CommissionCalculator
             return null;
         }
 
-        /** TODO: This part better to refactor, but I have no time */
-        $explodedData = explode(",", $this->row);
-        $param = explode(':', $explodedData[0]);
-        $bin = trim($param[1], '"');
-        $param = explode(':', $explodedData[1]);
-        $amount = trim($param[1], '"');
-        $param = explode(':', $explodedData[2]);
-        $currency = trim($param[1], '"}');
+        list($bin, $amount, $currency) = $this->extractData();
 
         $binProvider = new BinProvider();
         $binResults = $binProvider->lookupBin($bin);
@@ -53,6 +46,20 @@ class CommissionCalculator
         $commission = $amntFixed * ($isEu ? self::EU_COMMISION_RATE : self::NON_EU_COMMISSION_RATE);
 
         return $this->roundCommission($commission);
+    }
+
+    private function extractData(): array
+    {
+        /** TODO: This part better to refactor, but I have no time */
+        $explodedData = explode(",", $this->row);
+        $param = explode(':', $explodedData[0]);
+        $bin = trim($param[1], '"');
+        $param = explode(':', $explodedData[1]);
+        $amount = trim($param[1], '"');
+        $param = explode(':', $explodedData[2]);
+        $currency = trim($param[1], '"}');
+
+        return [$bin, $amount, $currency];
     }
 
     public function isEu(string $alpha2Code): bool
