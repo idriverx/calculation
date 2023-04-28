@@ -33,7 +33,7 @@ class CommissionCalculator
         $binResults = $this->binProvider->lookupBin($bin);
 
         if (!$binResults) {
-            throw new \Exception('Error while getting BIN data.');
+            throw new \Exception("Can't get data");
         }
 
         $binData = json_decode($binResults);
