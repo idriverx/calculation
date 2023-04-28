@@ -8,7 +8,7 @@ $rows = explode("\n", file_get_contents($argv[1]));
 
 foreach ($rows as $row) {
     try {
-        $calculator = new CommissionCalculator($row);
+        $calculator = new CommissionCalculator($row, new App\BinProvider(), new \App\CurrencyRatesProvider());
         $commission = $calculator->calculateCommission();
         echo $commission . "\n";
     } catch (Exception $e) {

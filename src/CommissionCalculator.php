@@ -6,14 +6,20 @@ class CommissionCalculator
 {
     private $row;
 
+    private BinProvider $binProvider;
+    private CurrencyRatesProvider $ratesProvider;
+
     private const EU_COMMISION_RATE = 0.01;
     private const NON_EU_COMMISSION_RATE = 0.02;
 
     private const EUR_CURRENCY = 'EUR';
 
-    public function __construct($row)
+    public function __construct($row, BinProvider $binProvider, CurrencyRatesProvider $ratesProvider)
     {
         $this->row = $row;
+
+        $this->binProvider = $binProvider;
+        $this->ratesProvider = $ratesProvider;
     }
 
     public function calculateCommission()
@@ -24,8 +30,7 @@ class CommissionCalculator
 
         list($bin, $amount, $currency) = $this->extractData();
 
-        $binProvider = new BinProvider();
-        $binResults = $binProvider->lookupBin($bin);
+        $binResults = $this->binProvider->lookupBin($bin);
 
         if (!$binResults) {
             throw new \Exception('Error while getting BIN data.');
@@ -34,8 +39,7 @@ class CommissionCalculator
         $binData = json_decode($binResults);
         $isEu = $this->isEu($binData->country->alpha2);
 
-        $currencyRatesProvider = new CurrencyRatesProvider();
-        $rate = $currencyRatesProvider->getExchangeRate($currency);
+        $rate = $this->ratesProvider->getExchangeRate($currency);
 
         if ($currency == self::EUR_CURRENCY || $rate == 0) {
             $amntFixed = $amount;
@@ -48,7 +52,7 @@ class CommissionCalculator
         return $this->roundCommission($commission);
     }
 
-    private function extractData(): array
+    public function extractData(): array
     {
         /** TODO: This part better to refactor, but I have no time */
         $explodedData = explode(",", $this->row);

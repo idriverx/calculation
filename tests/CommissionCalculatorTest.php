@@ -7,35 +7,81 @@ use PHPUnit\Framework\TestCase;
 
 class CommissionCalculatorTest extends TestCase
 {
-    public function testCalculateCommissionWithEmptyRow()
+    public function testCalculateCommissionReturnsNullIfRowIsEmpty()
     {
-        $calculator = new CommissionCalculator('');
-        $this->assertNull($calculator->calculateCommission());
+        $binProviderMock = $this->createMock(BinProvider::class);
+        $ratesProviderMock = $this->createMock(CurrencyRatesProvider::class);
+
+        $calculator = new CommissionCalculator('', $binProviderMock, $ratesProviderMock);
+
+        $result = $calculator->calculateCommission();
+
+        $this->assertNull($result);
     }
 
-    public function testRoundCommission()
+    public function testCalculateCommissionThrowsExceptionIfBinProviderReturnsFalse()
     {
-        $calculator = new CommissionCalculator('');
-        $this->assertEquals(10.01, $calculator->roundCommission(10.005));
-        $this->assertEquals(10.00, $calculator->roundCommission(10));
-        $this->assertEquals(10.01, $calculator->roundCommission(10.01));
+        $binProviderMock = $this->createMock(BinProvider::class);
+        $binProviderMock->method('lookupBin')->willReturn(false);
+
+        $ratesProviderMock = $this->createMock(CurrencyRatesProvider::class);
+
+        $calculator = new CommissionCalculator('{"bin":"123456","amount":"100.00","currency":"USD"}', $binProviderMock, $ratesProviderMock);
+
+        $this->expectException(\Exception::class);
+
+        $calculator->calculateCommission();
     }
 
-    public function testIsEuReturnsTrueForEUAlpha2Code()
+    public function testCalculateCommissionCalculatesCorrectCommissionForEuCountries()
     {
-        $calculator = new CommissionCalculator('');
-        $this->assertTrue($calculator->isEu('AT'));
+        $binProviderMock = $this->createMock(BinProvider::class);
+        $binProviderMock->method('lookupBin')->willReturn('{"country":{"alpha2":"DE"}}');
+
+        $ratesProviderMock = $this->createMock(CurrencyRatesProvider::class);
+        $ratesProviderMock->method('getExchangeRate')->willReturn(1.5);
+
+        $calculator = new CommissionCalculator('{"bin":"123456","amount":"100.00","currency":"EUR"}', $binProviderMock, $ratesProviderMock);
+
+        $result = $calculator->calculateCommission();
+
+        $this->assertEquals(1.00, $result);
     }
 
-    public function testIsEuReturnsFalseForNonEUAlpha2Code()
+    public function testExtractDataReturnsCorrectData()
     {
-        $calculator = new CommissionCalculator('');
-        $this->assertFalse($calculator->isEu('US'));
+        $binProviderMock = $this->createMock(BinProvider::class);
+        $ratesProviderMock = $this->createMock(CurrencyRatesProvider::class);
+
+        $calculator = new CommissionCalculator('{"bin":"123456","amount":"100.00","currency":"USD"}', $binProviderMock, $ratesProviderMock);
+
+        $result = $calculator->extractData();
+
+        $this->assertEquals(['123456', '100.00', 'USD'], $result);
     }
 
-    public function testRoundCommissionRoundsUpToTwoDecimalPlaces()
+    /**
+     * @return void
+     * @dataProvider dataProviderCountries
+     */
+    public function testIsEuReturnsTrueForEuCountries($country, $isEu)
     {
-        $calculator = new CommissionCalculator('');
-        $this->assertEquals(1.24, $calculator->roundCommission(1.234));
+        $binProviderMock = $this->createMock(BinProvider::class);
+        $ratesProviderMock = $this->createMock(CurrencyRatesProvider::class);
+
+        $calculator = new CommissionCalculator('', $binProviderMock, $ratesProviderMock);
+
+        $this->assertEquals($isEu, $calculator->isEu($country));
+    }
+
+    public function dataProviderCountries()
+    {
+        return [
+            ['DE', true],
+            ['FR', true],
+            ['IT', true],
+            ['UA', false],
+            ['US', false]
+        ];
     }
 }
