@@ -55,19 +55,6 @@ class CommissionCalculator
         return $this->roundCommission($commission);
     }
 
-    private function extractValue($string, $key)
-    {
-        $array = explode(',', $string);
-
-        return array_reduce($array, function ($carry, $item) use ($key) {
-            $pair = explode(':', $item);
-            if ($pair[0] === $key) {
-                $carry = trim($pair[1], '"');
-            }
-            return $carry;
-        });
-    }
-
     public function isEu(string $alpha2Code): bool
     {
         $euCountries = [
