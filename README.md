@@ -6,3 +6,5 @@ You can run the script with follow:
 Run tests:
 
 `./vendor/bin/phpunit tests`
+
+Don't forget about composer install
