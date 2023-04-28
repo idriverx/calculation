@@ -9,7 +9,7 @@ class CommissionCalculator
     private BinProvider $binProvider;
     private CurrencyRatesProvider $ratesProvider;
 
-    private const EU_COMMISION_RATE = 0.01;
+    private const EU_COMMISSION_RATE = 0.01;
     private const NON_EU_COMMISSION_RATE = 0.02;
 
     private const EUR_CURRENCY = 'EUR';
@@ -41,29 +41,22 @@ class CommissionCalculator
 
         $rate = $this->ratesProvider->getExchangeRate($currency);
 
-        if ($currency == self::EUR_CURRENCY || $rate == 0) {
-            $amntFixed = $amount;
+        if ($currency == self::EUR_CURRENCY || $rate === 0) {
+            $amountFixed = $amount;
         } else {
-            $amntFixed = $amount / $rate;
+            $amountFixed = $amount / $rate;
         }
 
-        $commission = $amntFixed * ($isEu ? self::EU_COMMISION_RATE : self::NON_EU_COMMISSION_RATE);
+        $commission = $amountFixed * ($isEu ? self::EU_COMMISSION_RATE : self::NON_EU_COMMISSION_RATE);
 
         return $this->roundCommission($commission);
     }
 
     public function extractData(): array
     {
-        /** TODO: This part better to refactor, but I have no time */
-        $explodedData = explode(",", $this->row);
-        $param = explode(':', $explodedData[0]);
-        $bin = trim($param[1], '"');
-        $param = explode(':', $explodedData[1]);
-        $amount = trim($param[1], '"');
-        $param = explode(':', $explodedData[2]);
-        $currency = trim($param[1], '"}');
+        $params = json_decode($this->row, true);
 
-        return [$bin, $amount, $currency];
+        return [$params['bin'], $params['amount'], $params['currency']];
     }
 
     public function isEu(string $alpha2Code): bool

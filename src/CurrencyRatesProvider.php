@@ -4,7 +4,7 @@ namespace App;
 
 class CurrencyRatesProvider
 {
-    public function getExchangeRate($currency)
+    public function getExchangeRate(string $currency)
     {
         $response = @json_decode(file_get_contents('https://api.exchangeratesapi.io/latest'), true);
 
